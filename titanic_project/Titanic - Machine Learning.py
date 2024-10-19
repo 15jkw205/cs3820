@@ -17,27 +17,39 @@ test_data = pd.read_csv('titanic/test.csv')
 print(train_data.head())
 print(train_data.info())
 
-
 # Check for missing values (basic data cleaning) 
 print(train_data.isnull().sum())
 '''
-# Convert categorical 'Sex' column to numerical
-train_data['Sex'] = train_data['Sex'].map({'male': 0, 'female': 1})
-
 
 
 # Part 1 - Model Selection - Random Forest
+
 # Consider doing this using a Decision Tree and Logistic Regression as well
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
+# Convert categorical 'Sex' column to numerical
+train_data['Sex'] = train_data['Sex'].map({'male': 0, 'female': 1})
+
+# Family Size Variable
+train_data['FamilySize'] = train_data['SibSp'] + train_data['Parch'] + 1
+
 # Select features and target
-features = ['Pclass', 'Sex', 'Age', 'Fare', 'SibSp', 'Parch']
+features = ['Pclass', 'Sex', 'Age', 'Fare', 'SibSp', 'Parch', 'FamilySize']
+
+# Important to note the SibSp, Parch brought it down 1.5% 
 x = train_data[features]
 y = train_data['Survived']
 
 # Handle missing values (e.g., filling Age with median)
 x.loc[:, 'Age'] = x['Age'].fillna(x['Age'].median())
+
+# Drop the 'Cabin' column as it has too many missing values
+train_data = train_data.drop('Cabin', axis=1)
+
+# Convery cateorical 'Embarked' column to numerical
+train_data['Embarked'] = train_data['Embarked'].fillna('S')
+train_data = pd.get_dummies(train_data, columns=['Embarked'], drop_first=True)
 
 # Split the data into training and validation sets
 x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_state=0)
@@ -47,16 +59,13 @@ model = RandomForestClassifier(n_estimators=100, random_state=0)
 model.fit(x_train, y_train)
 
 # Check the accuracy
-print(model.score(x_val, y_val))
-
-
-# Part 2 - Making Predicitions
-
-# Drop the 'Cabin' column as it has too many missing values
-train_data = train_data.drop('Cabin', axis=1)
-test_data = test_data.drop('Cabin', axis=1)
+print(model.score(x_val, y_val), end='\n\n')
+print(train_data.isnull().sum())
 
 '''
+# Part 2 - Making Predicitions
+
+test_data = test_data.drop('Cabin', axis=1)
 test_data['Sex'] = test_data['Sex'].map({'male': 0, 'female': 1})
 test_data['Age'] = test_data['Age'].fillna(test_data['Age'].median())
 
